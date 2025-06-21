@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telescope Designer</title>
+  <link rel="stylesheet" href="tailwind.css">
+</head>
+<body class="bg-gray-100 p-4">
+  <h1 class="text-2xl font-bold mb-4">Telescope Designer</h1>
+  <div class="flex flex-col md:flex-row gap-4">
+    <div class="basis-1/3 space-y-4">
+      <div>
+        <label class="block text-sm font-semibold" for="diameter">Mirror Diameter (mm)</label>
+        <input type="range" id="diameter" min="50" max="500" value="200" class="w-full">
+        <span id="diameterValue" class="text-sm"></span>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold" for="focalLength">Focal Length (mm)</label>
+        <input type="range" id="focalLength" min="100" max="2000" value="1000" class="w-full">
+        <span id="focalValue" class="text-sm"></span>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold" for="opticalType">Optical Type</label>
+        <select id="opticalType" class="w-full border p-1">
+          <option value="refractor">Refractor</option>
+          <option value="newtonian">Newtonian</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold" for="mount">Mount Style</label>
+        <select id="mount" class="w-full border p-1">
+          <option value="dobsonian">Dobsonian</option>
+          <option value="altaz">Alt-Az</option>
+        </select>
+      </div>
+      <a id="downloadLink" href="#" download="telescope.svg" class="inline-block mt-2 bg-blue-500 text-white px-4 py-2 rounded">Export SVG</a>
+    </div>
+    <div id="svgContainer" class="basis-2/3 bg-white p-2 border"></div>
+  </div>
+
+  <script src="maker.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
