@@ -1,0 +1,90 @@
+class TelescopeDesigner {
+  constructor() {
+    this.options = {
+      diameter: 200,
+      focalLength: 1000,
+      opticalType: 'refractor',
+      mount: 'dobsonian'
+    };
+    this.svgContainer = document.getElementById('svgContainer');
+    this.downloadLink = document.getElementById('downloadLink');
+    this.initControls();
+    this.updateModel();
+  }
+
+  initControls() {
+    const diameterInput = document.getElementById('diameter');
+    const focalInput = document.getElementById('focalLength');
+    const opticalSelect = document.getElementById('opticalType');
+    const mountSelect = document.getElementById('mount');
+    const diameterValue = document.getElementById('diameterValue');
+    const focalValue = document.getElementById('focalValue');
+
+    const syncValues = () => {
+      diameterValue.textContent = this.options.diameter + ' mm';
+      focalValue.textContent = this.options.focalLength + ' mm';
+    };
+
+    diameterInput.addEventListener('input', e => {
+      this.options.diameter = parseInt(e.target.value);
+      syncValues();
+      this.updateModel();
+    });
+
+    focalInput.addEventListener('input', e => {
+      this.options.focalLength = parseInt(e.target.value);
+      syncValues();
+      this.updateModel();
+    });
+
+    opticalSelect.addEventListener('change', e => {
+      this.options.opticalType = e.target.value;
+      this.updateModel();
+    });
+
+    mountSelect.addEventListener('change', e => {
+      this.options.mount = e.target.value;
+      this.updateModel();
+    });
+
+    syncValues();
+  }
+
+  createModel() {
+    const { makerjs } = window;
+    const m = makerjs.models;
+    const p = makerjs.paths;
+    const model = { models: {}, paths: {} };
+
+    const scale = 0.1;
+    const length = this.options.focalLength * scale;
+    const diameter = this.options.diameter * scale * 0.5;
+
+    model.models.tube = new m.Rectangle(length, diameter);
+
+    if (this.options.opticalType === 'refractor') {
+      model.paths.aperture = new p.Circle([length, diameter / 2], diameter / 2);
+    } else {
+      model.paths.primary = new p.Circle([0, diameter / 2], diameter / 2);
+      model.paths.secondary = new p.Circle([length * 0.8, diameter / 2], diameter / 4);
+    }
+
+    if (this.options.mount === 'dobsonian') {
+      model.models.base = makerjs.model.move(new m.Rectangle(diameter * 2, diameter / 2), [length / 2 - diameter, -diameter / 2]);
+    } else {
+      model.paths.mount = new p.Line([length / 2, -diameter / 2], [length / 2, -diameter]);
+    }
+
+    return model;
+  }
+
+  updateModel() {
+    const model = this.createModel();
+    const svg = makerjs.exporter.toSVG(model);
+    this.svgContainer.innerHTML = svg;
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    this.downloadLink.href = URL.createObjectURL(blob);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => new TelescopeDesigner());
