@@ -34,13 +34,13 @@ class TelescopeDesigner {
     };
 
     diameterInput.addEventListener('input', e => {
-      this.options.diameter = parseInt(e.target.value);
+      this.options.diameter = parseInt(e.target.value, 10);
       syncValues();
       this.updateModel();
     });
 
     focalInput.addEventListener('input', e => {
-      this.options.focalLength = parseInt(e.target.value);
+      this.options.focalLength = parseInt(e.target.value, 10);
       syncValues();
       this.updateModel();
     });
@@ -56,7 +56,7 @@ class TelescopeDesigner {
     });
 
     orientationInput.addEventListener('input', e => {
-      this.options.orientation = parseInt(e.target.value);
+      this.options.orientation = parseInt(e.target.value, 10);
       syncValues();
       this.updateModel();
     });
@@ -113,6 +113,9 @@ class TelescopeDesigner {
     const model = this.createModel();
     const svg = makerjs.exporter.toSVG(model, { stroke: this.options.color, fill: 'none' });
     this.svgContainer.innerHTML = svg;
+    if (this.downloadLink.href) {
+      URL.revokeObjectURL(this.downloadLink.href);
+    }
     const blob = new Blob([svg], { type: 'image/svg+xml' });
     this.downloadLink.href = URL.createObjectURL(blob);
   }
