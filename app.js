@@ -11,6 +11,10 @@ class TelescopeDesigner {
       };
     this.svgContainer = document.getElementById('svgContainer');
     this.downloadLink = document.getElementById('downloadLink');
+    this.makerjs = window.makerjs || window.MakerJs;
+    if (!this.makerjs) {
+      throw new Error('Maker.js library not found');
+    }
     this.initControls();
     this.updateModel();
   }
@@ -75,9 +79,8 @@ class TelescopeDesigner {
   }
 
   createModel() {
-    const { makerjs } = window;
-    const m = makerjs.models;
-    const p = makerjs.paths;
+    const m = this.makerjs.models;
+    const p = this.makerjs.paths;
     const model = { models: {}, paths: {} };
 
     const scale = 0.1;
@@ -88,7 +91,7 @@ class TelescopeDesigner {
 
     if (this.options.showFinder) {
       const finder = new m.Rectangle(length * 0.2, diameter * 0.1);
-      model.models.finder = makerjs.model.move(finder, [length * 0.4, diameter]);
+      model.models.finder = this.makerjs.model.move(finder, [length * 0.4, diameter]);
     }
 
     if (this.options.opticalType === 'refractor') {
@@ -99,19 +102,19 @@ class TelescopeDesigner {
     }
 
     if (this.options.mount === 'dobsonian') {
-      model.models.base = makerjs.model.move(new m.Rectangle(diameter * 2, diameter / 2), [length / 2 - diameter, -diameter / 2]);
+      model.models.base = this.makerjs.model.move(new m.Rectangle(diameter * 2, diameter / 2), [length / 2 - diameter, -diameter / 2]);
     } else {
       model.paths.mount = new p.Line([length / 2, -diameter / 2], [length / 2, -diameter]);
     }
 
-    makerjs.model.rotate(model, this.options.orientation, [0, 0]);
+    this.makerjs.model.rotate(model, this.options.orientation, [0, 0]);
 
     return model;
   }
 
   updateModel() {
     const model = this.createModel();
-    const svg = makerjs.exporter.toSVG(model, { stroke: this.options.color, fill: 'none' });
+    const svg = this.makerjs.exporter.toSVG(model, { stroke: this.options.color, fill: 'none' });
     this.svgContainer.innerHTML = svg;
     if (this.downloadLink.href) {
       URL.revokeObjectURL(this.downloadLink.href);
