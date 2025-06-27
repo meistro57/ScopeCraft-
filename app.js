@@ -12,6 +12,13 @@ class TelescopeDesigner {
     this.svgContainer = document.getElementById('svgContainer');
     this.downloadLink = document.getElementById('downloadLink');
     this.makerjs = window.makerjs || window.MakerJs;
+    if (!this.makerjs && typeof window.require === 'function') {
+      try {
+        this.makerjs = window.require('makerjs');
+      } catch (e) {
+        /* ignore */
+      }
+    }
     if (!this.makerjs) {
       throw new Error('Maker.js library not found');
     }
