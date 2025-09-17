@@ -72,9 +72,17 @@ describe('TelescopeDesigner', () => {
       <input id="orientation" type="range" value="0" />
       <span id="orientationValue"></span>
       <input id="color" type="color" value="#000000" />
+      <select id="eyepiece"></select>
       <input id="finder" type="checkbox" checked />
       <a id="downloadLink" href=""></a>
       <div id="svgContainer"></div>
+      <span id="metric-focalRatio"></span>
+      <span id="metric-magnification"></span>
+      <span id="metric-trueField"></span>
+      <span id="metric-exitPupil"></span>
+      <span id="metric-lightGathering"></span>
+      <span id="metric-resolution"></span>
+      <span id="metric-maxMagnification"></span>
     `;
 
     const downloadLink = document.getElementById('downloadLink');
@@ -173,5 +181,17 @@ describe('TelescopeDesigner', () => {
     expect(blobArg.parts).toEqual(['<svg></svg>']);
     expect(blobArg.type).toBe('image/svg+xml');
     expect(designer.downloadLink.href).toBe(createObjectURLMock.mock.results[0].value);
+  });
+
+  test('metrics panel displays derived values for default configuration', () => {
+    createDesigner();
+
+    expect(document.getElementById('metric-focalRatio').textContent).toBe('f/5.0');
+    expect(document.getElementById('metric-magnification').textContent).toBe('40×');
+    expect(document.getElementById('metric-trueField').textContent).toBe('1.25°');
+    expect(document.getElementById('metric-exitPupil').textContent).toBe('5.0 mm');
+    expect(document.getElementById('metric-lightGathering').textContent).toBe('816× human eye');
+    expect(document.getElementById('metric-resolution').textContent).toBe('0.58″');
+    expect(document.getElementById('metric-maxMagnification').textContent).toBe('400×');
   });
 });

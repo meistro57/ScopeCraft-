@@ -12,6 +12,8 @@ ScopeCraft is a lightweight browser application for quickly mocking up telescope
 - Optional finder scope that can be toggled on or off.
 - Live SVG preview that updates as you tweak settings.
 - Export the current design as an SVG file.
+- Choose eyepiece presets and view live optical metrics (f/ratio, magnification, field of view, exit pupil, light gathering, resolution).
+- Inline tooltips explain how each control influences the design.
 
 ## Getting Started
 

@@ -1,16 +1,55 @@
+let calculations = null;
+
+if (typeof require === 'function') {
+  try {
+    calculations = require('./calculations');
+  } catch (error) {
+    calculations = null;
+  }
+}
+
+if (!calculations && typeof window !== 'undefined') {
+  calculations = window.ScopeCraftCalculations || null;
+}
+
+function isFiniteNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
 class TelescopeDesigner {
   constructor() {
-      this.options = {
-        diameter: 200,
-        focalLength: 1000,
-        opticalType: 'refractor',
-        mount: 'dobsonian',
-        orientation: 0,
-        color: '#000000',
-        showFinder: true
-      };
+    this.eyepieces = [
+      { id: 'plossl-32', name: '32mm Plössl (50°)', focalLength: 32, apparentFoV: 50 },
+      { id: 'plossl-25', name: '25mm Plössl (50°)', focalLength: 25, apparentFoV: 50 },
+      { id: 'plossl-10', name: '10mm Plössl (52°)', focalLength: 10, apparentFoV: 52 },
+      { id: 'uw-6.5', name: '6.5mm Ultra-Wide (82°)', focalLength: 6.5, apparentFoV: 82 }
+    ];
+
+    this.options = {
+      diameter: 200,
+      focalLength: 1000,
+      opticalType: 'refractor',
+      mount: 'dobsonian',
+      orientation: 0,
+      color: '#000000',
+      showFinder: true,
+      eyepieceId: this.eyepieces[1]?.id || null
+    };
+
     this.svgContainer = document.getElementById('svgContainer');
     this.downloadLink = document.getElementById('downloadLink');
+    this.eyepieceSelect = document.getElementById('eyepiece');
+
+    this.metricsElements = {
+      focalRatio: document.getElementById('metric-focalRatio'),
+      magnification: document.getElementById('metric-magnification'),
+      trueField: document.getElementById('metric-trueField'),
+      exitPupil: document.getElementById('metric-exitPupil'),
+      lightGathering: document.getElementById('metric-lightGathering'),
+      resolution: document.getElementById('metric-resolution'),
+      maxMagnification: document.getElementById('metric-maxMagnification')
+    };
+
     this.makerjs = window.makerjs || window.MakerJs;
     if (!this.makerjs && typeof window.require === 'function') {
       try {
@@ -38,10 +77,21 @@ class TelescopeDesigner {
     const focalValue = document.getElementById('focalValue');
     const orientationValue = document.getElementById('orientationValue');
 
+    if (this.eyepieceSelect) {
+      this.populateEyepieces();
+      this.eyepieceSelect.addEventListener('change', e => {
+        this.options.eyepieceId = e.target.value;
+        this.updateModel();
+      });
+    }
+
     const syncValues = () => {
       diameterValue.textContent = this.options.diameter + ' mm';
       focalValue.textContent = this.options.focalLength + ' mm';
       orientationValue.textContent = this.options.orientation + '°';
+      if (this.eyepieceSelect && this.options.eyepieceId) {
+        this.eyepieceSelect.value = this.options.eyepieceId;
+      }
     };
 
     diameterInput.addEventListener('input', e => {
@@ -85,6 +135,29 @@ class TelescopeDesigner {
     syncValues();
   }
 
+  populateEyepieces() {
+    if (!this.eyepieceSelect) {
+      return;
+    }
+    this.eyepieceSelect.innerHTML = '';
+    this.eyepieces.forEach(eyepiece => {
+      const option = document.createElement('option');
+      option.value = eyepiece.id;
+      option.textContent = eyepiece.name;
+      this.eyepieceSelect.appendChild(option);
+    });
+    if (this.options.eyepieceId) {
+      this.eyepieceSelect.value = this.options.eyepieceId;
+    }
+  }
+
+  getSelectedEyepiece() {
+    if (!this.options.eyepieceId) {
+      return null;
+    }
+    return this.eyepieces.find(eyepiece => eyepiece.id === this.options.eyepieceId) || null;
+  }
+
   createModel() {
     const m = this.makerjs.models;
     const p = this.makerjs.paths;
@@ -119,6 +192,39 @@ class TelescopeDesigner {
     return model;
   }
 
+  updateMetrics() {
+    if (!calculations) {
+      return;
+    }
+
+    const { diameter, focalLength } = this.options;
+    const eyepiece = this.getSelectedEyepiece();
+    const focalRatio = calculations.calculateFocalRatio(diameter, focalLength);
+    const magnification = eyepiece ? calculations.calculateMagnification(focalLength, eyepiece.focalLength) : null;
+    const trueField = eyepiece
+      ? calculations.calculateTrueFieldOfView(focalLength, eyepiece.focalLength, eyepiece.apparentFoV)
+      : null;
+    const exitPupil = magnification ? calculations.calculateExitPupil(diameter, magnification) : null;
+    const lightGathering = calculations.calculateLightGatheringPower(diameter);
+    const resolution = calculations.calculateResolutionLimit(diameter);
+    const maxMagnification = calculations.calculateMaxUsefulMagnification(diameter);
+
+    this.setMetric('focalRatio', isFiniteNumber(focalRatio) ? `f/${focalRatio.toFixed(1)}` : '—');
+    this.setMetric('magnification', isFiniteNumber(magnification) ? `${magnification.toFixed(0)}×` : '—');
+    this.setMetric('trueField', isFiniteNumber(trueField) ? `${trueField.toFixed(2)}°` : '—');
+    this.setMetric('exitPupil', isFiniteNumber(exitPupil) ? `${exitPupil.toFixed(1)} mm` : '—');
+    this.setMetric('lightGathering', isFiniteNumber(lightGathering) ? `${Math.round(lightGathering)}× human eye` : '—');
+    this.setMetric('resolution', isFiniteNumber(resolution) ? `${resolution.toFixed(2)}″` : '—');
+    this.setMetric('maxMagnification', isFiniteNumber(maxMagnification) ? `${maxMagnification.toFixed(0)}×` : '—');
+  }
+
+  setMetric(key, value) {
+    const element = this.metricsElements[key];
+    if (element) {
+      element.textContent = value;
+    }
+  }
+
   updateModel() {
     const model = this.createModel();
     const svg = this.makerjs.exporter.toSVG(model, { stroke: this.options.color, fill: 'none' });
@@ -128,6 +234,7 @@ class TelescopeDesigner {
     }
     const blob = new Blob([svg], { type: 'image/svg+xml' });
     this.downloadLink.href = URL.createObjectURL(blob);
+    this.updateMetrics();
   }
 }
 
