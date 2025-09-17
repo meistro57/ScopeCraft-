@@ -131,4 +131,10 @@ class TelescopeDesigner {
   }
 }
 
-window.addEventListener('DOMContentLoaded', () => new TelescopeDesigner());
+if (typeof window !== 'undefined' && window.addEventListener) {
+  window.addEventListener('DOMContentLoaded', () => new TelescopeDesigner());
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = TelescopeDesigner;
+}
